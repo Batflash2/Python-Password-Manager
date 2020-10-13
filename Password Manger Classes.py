@@ -28,10 +28,12 @@ class PasswordManager:
     @classmethod
     def main_menu(cls):
         while True:
-            print("1: Login"
-                  "2: Create new user"
-                  "3: Check number of users"
-                  "\nEnter 1 or 2")
+            os.system('cls')
+            print("1: Login\n"
+                  "2: Create new user\n"
+                  "3: Check number of users\n"
+                  "q: Quit the Password Manager"
+                  "\nEnter 1 or 2\n")
 
             choice = input()
             if choice == '1':
@@ -40,8 +42,13 @@ class PasswordManager:
             elif choice == '2':
                 setup()
                 break
+            elif choice == '3':
+                cls.check_number_of_users()
+            elif choice == 'q':
+                quit()
             else:
                 print("Error wrong choice!!")
+                sleep(3)
 
     @classmethod
     def login(cls):
@@ -51,38 +58,48 @@ class PasswordManager:
             print("Enter your password")
             password = input()
 
-            # Get the number of users to loop through all and check the credentials
-            c = con.cursor()
-            count = len(c.execute("SELECT * FROM USERS").fetchall())
-
-            stored_usernames = c.execute("SELECT username FROM USERS").fetchall()
-            stored_passwords = c.execute("SELECT password FROM USERS").fetchall()
-            stored_keys = c.execute("SELECT key FROM USERS").fetchall()
-
+            # variable to check if the username and password matches to that of any of the stored user credentials
             success = False
-            for user_id in range(count):
-                f = Fernet(stored_keys[user_id])
-                encrypted_username = f.encrypt(username.encode())
-                encrypted_password = f.encrypt(password.encode())
-                if encrypted_username == stored_usernames[user_id] and encrypted_password == stored_passwords[user_id]:
+            rows = cls.c.execute("SELECT * FROM USERS").fetchall()
+            for row in rows:
+                user_id, decrypted_username, decrypted_password = cls.decrypt_username_and_password(row)
+                if username == decrypted_username and password == decrypted_password:
                     success = True
+                    cls.user_id = user_id
+                    del (user_id, username, password, decrypted_username, decrypted_password)
                     break
 
             if not success:
                 print("Error username and password do not match")
             else:
-                print("Successfully logged in as USER" + str(user_id + 1))
+                print("Successfully logged in as " + cls.user_id)
                 break
+        cls.second_menu()
 
-    def second_menu(self):
+    @classmethod
+    def second_menu(cls):
         while True:
-            print("Do you want to:"
-                  "1: Add an account's credentials"
-                  "2: Look through the data"
-                  "3: Remove an account's credentials")
+            os.system('cls')
+            print("Do you want to:\n"
+                  "1: Add an account's credentials\n"
+                  "2: Look through the data\n"
+                  "3: Remove an account's credentials\n"
+                  "q: Quit")
             choice = input()
+            if choice == '1':
+                cls.add_account_credentials()
+            elif choice == '2':
+                cls.display_all_user_credentials()
+            elif choice == '3':
+                cls.remove_account_credentials()
+            elif choice == 'q':
+                quit()
+            else:
+                print("ERROR: Wrong choice")
+                sleep(3)
 
-    def add_account_credentials(self):
+    @classmethod
+    def add_account_credentials(cls):
         print("Enter the name of the account you want to store")
         account_name = input()
         print("enter the username of the account you want to store")
@@ -95,13 +112,52 @@ class PasswordManager:
         encrypted_username = f.encrypt(username.encode())
         encrypted_password = f.encrypt(password.encode())
 
-        c = con.cursor()
-        c.execute("INSERT INTO USER" + str(self.user_id) + "VALUES(?, ?, ?, ?)",
-                  (account_name, encrypted_username, encrypted_password, key))
+        # Delete sensitive data
+        del (username, password)
 
-    def remove_account_credentials(self):
+        cls.c.execute("INSERT INTO " + cls.user_id + " VALUES(?, ?, ?, ?)",
+                  (account_name, encrypted_username, encrypted_password, key))
+        cls.con.commit()
+
+    @classmethod
+    def remove_account_credentials(cls):
         pass
+
+    @classmethod
+    def display_all_user_credentials(cls):
+        print(cls.user_id)
+        rows = cls.c.execute("SELECT * FROM " + cls.user_id).fetchall()
+        if rows:
+            print("{:<15} {:<15} {:<15}".format("ACCOUNT", "USERNAME", "PASSWORD"))
+            print(rows)
+            for row in rows:
+                account, decrypted_username, decrypted_password = cls.decrypt_username_and_password(row)
+                print("{:<15} {:<15} {:<15}".format(account, decrypted_username, decrypted_password))
+                print("\n\n 10 second delay before the data disappears")
+                sleep(10)
+            del (rows, row, decrypted_username, decrypted_password)
+
+        else:
+            print("\n\n\n\nHE DATA YOU ARE LOOKING FOR DOES NOT EXIST\n\n\n")
+
+    @classmethod
+    def check_number_of_users(cls):
+        user_ids = cls.c.execute("SELECT users FROM USERS").fetchall()
+        print(user_ids)
+        print("There are " + str(len(user_ids)) + " users")
+
+    @classmethod
+    def decrypt_username_and_password(cls, row):
+        user_id_or_account_name, stored_username, stored_password, stored_key = row
+
+        f = Fernet(stored_key)
+        decrypted_username = f.decrypt(stored_username).decode()
+        decrypted_password = f.decrypt(stored_password).decode()
+
+        return user_id_or_account_name, decrypted_username, decrypted_password
 
 
 if __name__ == '__main__':
-    pass
+    obj = PasswordManager()
+
+    obj.main_menu()
