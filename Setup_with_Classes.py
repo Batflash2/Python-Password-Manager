@@ -24,7 +24,7 @@ class Setup:
         # If the Database.db file doesn't exist it creates one
         cls.c = cls.con.cursor()
         if not database_exist:
-            cls.c.execute("CREATE TABLE USERS(users, username, password, key)")
+            cls.c.execute("CREATE TABLE USERS(userid, username, password, key)")
             cls.con.commit()
 
     @classmethod
@@ -47,8 +47,8 @@ class Setup:
         password = f.encrypt(password.encode())
 
         # Checks the number of users to give it a name like USER2, USER3 etc
-        number = len(c.execute("SELECT users FROM USERS").fetchall()) + 1
-        if c.execute("SELECT users FROM USERS").fetchone() == "USER1":
+        number = len(c.execute("SELECT userid FROM USERS").fetchall()) + 1
+        if c.execute("SELECT userid FROM USERS").fetchone() == "USER1":
             number -= 1
 
         # Inserts the user id, username, password and the key used to encrypt the username and password
