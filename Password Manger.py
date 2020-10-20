@@ -1,4 +1,5 @@
-import os.path
+from os.path import isfile
+from os import system
 from time import sleep
 import sqlite3 as sql
 from sqlite3 import Error
@@ -9,7 +10,7 @@ from Setup import setup
 class PasswordManager:
     @classmethod
     def __init__(cls):
-        if not os.path.isfile('Database.db'):
+        if not isfile('Database.db'):
             print("Error the database file was not found!!\n\n"
                   "Creating new Database file")
             sleep(3)
@@ -28,7 +29,7 @@ class PasswordManager:
     @classmethod
     def main_menu(cls):
         while True:
-            os.system('cls')
+            system('cls')
             print("1: Login\n"
                   "2: Create new user\n"
                   "3: Check number of users\n"
@@ -51,6 +52,7 @@ class PasswordManager:
     @classmethod
     def login(cls):
         while True:
+            system('cls')
             print("Enter your username")
             username = input()
             print("Enter your password")
@@ -71,13 +73,14 @@ class PasswordManager:
                 print("Error username and password do not match")
             else:
                 print("Successfully logged in as " + cls.user_id)
+                sleep(3)
                 break
         cls.user_menu()
 
     @classmethod
     def user_menu(cls):
         while True:
-            os.system('cls')
+            system('cls')
             print("Do you want to:\n"
                   "1: Add an account's credentials\n"
                   "2: Look through the data\n"
@@ -156,6 +159,7 @@ class PasswordManager:
     @classmethod
     def change_account_password(cls):
         while True:
+            system('cls')
             print("Enter the name of the account")
             account = input()
             accounts = cls.c.execute("SELECT account FROM " + str(cls.user_id)).fetchall()
@@ -171,6 +175,7 @@ class PasswordManager:
                 print("Error account does not exist please try again")
 
         while True:
+            system('cls')
             print("Enter the new password:")
             new_password = input()
             print("Re-enter the password:")
@@ -218,7 +223,10 @@ class PasswordManager:
     @classmethod
     def check_number_of_users(cls):
         user_ids = cls.c.execute("SELECT userid FROM USERS").fetchall()
-        print("There are " + str(len(user_ids)) + " users")
+        print("\n\nThere are " + str(len(user_ids)) + " users\n\n")
+
+        print("Click enter to continue")
+        input()
 
     @classmethod
     def decrypt_username_and_password(cls, row):

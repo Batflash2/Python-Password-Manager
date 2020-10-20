@@ -1,4 +1,5 @@
-import os.path
+from os.path import isfile
+from os import system
 from time import sleep
 import sqlite3 as sql
 from sqlite3 import Error
@@ -32,7 +33,7 @@ class Setup:
         c = cls.con.cursor()
 
         # Clear the screen
-        os.system('cls')
+        system('cls')
 
         key = Fernet.generate_key()
         f = Fernet(key)
@@ -40,6 +41,7 @@ class Setup:
         print("enter a username you won't forget")
         username = input()
         while True:
+            system('cls')
             print("enter a password you won't forget")
             password = input()
             print("Re-enter the password")
@@ -77,6 +79,7 @@ class Setup:
     @classmethod
     def create_new_user_ask(cls):
         while True:
+            system('cls')
             print("\nDo you want to create a new user?   y/n\n")
             choice = input()
 
@@ -97,7 +100,7 @@ class Setup:
 
         print("\n\n\n\n\nEnter to go to the next page")
         input()
-        os.system('cls')  # Clears the screen
+        system('cls')  # Clears the screen
 
 
 def setup():
