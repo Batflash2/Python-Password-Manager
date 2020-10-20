@@ -137,8 +137,8 @@ class PasswordManager:
                 f = Fernet(stored_key)
                 encrypted_new_password = f.encrypt(new_password.encode())
                 print(encrypted_new_password)
-                cls.c.execute("UPDATE USERS SET password = " + str(encrypted_new_password) +
-                              " WHERE userid = ?", (str(cls.user_id),))
+                cls.c.execute("UPDATE USERS SET password = ? WHERE userid = ?",
+                              (encrypted_new_password, str(cls.user_id),))
                 cls.con.commit()
                 break
             else:
