@@ -39,8 +39,14 @@ class Setup:
 
         print("enter a username you won't forget")
         username = input()
-        print("enter a password you won't forget")
-        password = input()
+        while True:
+            print("enter a password you won't forget")
+            password = input()
+            print("Re-enter the password")
+            if password == input():
+                break
+            else:
+                print("The passwords do not match please try again")
 
         # Encrypts username and password using the cryptography library
         username = f.encrypt(username.encode())
