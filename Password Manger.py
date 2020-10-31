@@ -270,7 +270,7 @@ class PasswordManager:
         user_ids = cls.c.execute("SELECT userid FROM USERS").fetchall()
         print("\n\nThere are " + str(len(user_ids)) + " users\n\n")
 
-        if user_ids > 0:
+        if len(user_ids) > 0:
             rows = cls.c.execute("SELECT * FROM USERS")
             print("{:<10} {:<15}".format("USER ID", "NAME"))
             for row in rows:
