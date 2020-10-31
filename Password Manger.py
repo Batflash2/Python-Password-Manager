@@ -40,7 +40,6 @@ class PasswordManager:
                 cls.login()
             elif choice == '2':
                 setup()
-                break
             elif choice == '3':
                 cls.check_number_of_users()
             elif choice == 'q':
@@ -62,7 +61,7 @@ class PasswordManager:
             success = False
             rows = cls.c.execute("SELECT * FROM USERS").fetchall()
             for row in rows:
-                user_id, decrypted_username, decrypted_password = cls.decrypt_username_and_password(row)
+                user_id, name, decrypted_username, decrypted_password = cls.decrypt_username_and_password(row)
                 if username == decrypted_username and password == decrypted_password:
                     success = True
                     cls.user_id = user_id
@@ -73,7 +72,7 @@ class PasswordManager:
                 print("Error username and password do not match")
             else:
                 print("Successfully logged in as " + cls.user_id)
-                sleep(3)
+                sleep(2)
                 break
         cls.user_menu()
 
@@ -130,8 +129,12 @@ class PasswordManager:
         # Delete sensitive data
         del (username, password)
 
-        cls.c.execute("INSERT INTO " + cls.user_id + " VALUES(?, ?, ?, ?)",
-                      (account_name, encrypted_username, encrypted_password, key))
+        account_id = len(cls.c.execute("SELECT account_id FROM " + cls.user_id).fetchall()) + 1
+        if cls.c.execute("SELECT account_id FROM " + cls.user_id).fetchone() == "1":
+            account_id -= 1
+
+        cls.c.execute("INSERT INTO " + cls.user_id + " VALUES(?, ?, ?, ?, ?)",
+                      (account_id, account_name, encrypted_username, encrypted_password, key))
         cls.con.commit()
 
     # Function to change the password of the user currently logged in
@@ -142,13 +145,12 @@ class PasswordManager:
             new_password = input()
             print("Re-enter the password:")
             if new_password == input():
-                stored_key = cls.c.execute("SELECT key FROM USERS WHERE userid = ?", (str(cls.user_id),)).fetchone()
+                stored_key = cls.c.execute("SELECT key FROM USERS WHERE userid = ?", (cls.user_id,)).fetchone()
                 stored_key = str(stored_key)[3:-3].encode()
                 f = Fernet(stored_key)
                 encrypted_new_password = f.encrypt(new_password.encode())
-                print(encrypted_new_password)
                 cls.c.execute("UPDATE USERS SET password = ? WHERE userid = ?",
-                              (encrypted_new_password, str(cls.user_id),))
+                              (encrypted_new_password, cls.user_id,))
                 cls.con.commit()
                 break
             else:
@@ -160,61 +162,102 @@ class PasswordManager:
     def change_account_password(cls):
         while True:
             system('cls')
-            print("Enter the name of the account")
-            account = input()
-            accounts = cls.c.execute("SELECT account FROM " + str(cls.user_id)).fetchall()
-            account_exist = False
-            for stored_account in accounts:
-                stored_account = str(stored_account)[2:-3]
-                if stored_account == account:
-                    account_exist = True
-                    break
-            if account_exist:
-                break
-            else:
-                print("Error account does not exist please try again")
+            cls.display_all_user_credentials()
 
-        while True:
-            system('cls')
-            print("Enter the new password:")
-            new_password = input()
-            print("Re-enter the password:")
-            if new_password == input():
-                stored_key = cls.c.execute("SELECT key FROM " + cls.user_id + " WHERE account = ?",
-                                           (account,)).fetchone()
-                stored_key = str(stored_key)[3:-3].encode()
-                f = Fernet(stored_key)
-                encrypted_new_password = f.encrypt(new_password.encode())
-                cls.c.execute("UPDATE " + cls.user_id + " SET password = ? WHERE account = ?",
-                              (encrypted_new_password, account,))
-                cls.con.commit()
-                break
-            else:
-                print("The passwords do not match please try again")
-                sleep(3)
+            print("Enter the account id of the account password you want to change")
+            account_id = int(input())
 
+            max_account_id = len(cls.c.execute("SELECT account_id FROM " + cls.user_id).fetchall()) + 1
+            if cls.c.execute("SELECT account_id FROM " + cls.user_id).fetchone() == "1":
+                max_account_id -= 1
+
+            # To check if the password has been successfully updated or not
+            done = False
+
+            # To check if the id entered by the user is within the range or not
+            if 0 < account_id < max_account_id:
+                while True:
+                    system('cls')
+                    print("Enter the new password:")
+                    new_password = input()
+                    print("Re-enter the password:")
+                    if new_password == input():
+                        stored_key = cls.c.execute("SELECT key FROM " + cls.user_id + " WHERE account_id = ?",
+                                                   (account_id,)).fetchone()
+                        stored_key = str(stored_key)[3:-3].encode()
+                        f = Fernet(stored_key)
+                        encrypted_new_password = f.encrypt(new_password.encode())
+                        cls.c.execute("UPDATE " + cls.user_id + " SET password = ? WHERE account_id = ?",
+                                      (encrypted_new_password, account_id,))
+                        cls.con.commit()
+                        done = True
+                        break
+                    else:
+                        print("The passwords do not match please try again")
+                        sleep(3)
+            else:
+                print("Error: Wrong input")
+                sleep(2)
+
+            # Exit the loop if the password has been successfully updated
+            if done:
+                break
+
+    # To remove an account credential when it is no longer required
     @classmethod
     def remove_account_credentials(cls):
-        pass
+        cls.display_all_user_credentials()
+        print("Enter the account_id")
+        account_id = input()
+
+        while True:
+            print("Are you sure you want to delete the credentials for this account?   y/n")
+            cls.display_one_user_credential(account_id)
+            choice = input()
+            if choice == "y" or choice == "Y":
+                cls.c.execute("DELETE FROM " + cls.user_id + " WHERE account_id = " + str(account_id))
+                print("The credentials have been deleted")
+                break
+            elif choice == "n" or choice == "N":
+                break
+            else:
+                print("Error: Wrong option. Try again")
+
+        cls.con.commit()
 
     @classmethod
     def remove_user(cls):
         pass
+
+    # To rearrange the accounts after an account has been removed since there is a number gap
+    @classmethod
+    def rearrange_accounts(cls):
+        pass
+
+    @classmethod
+    def confirm_user(cls):
+        pass
+
+    @classmethod
+    def display_one_user_credential(cls, account_id):
+        row = cls.c.execute("SELECT * FROM " + cls.user_id + " WHERE account_id = " + str(account_id)).fetchone()
+        print("\n")
+        print("{:<5} {:<15} {:<15} {:<15}".format("ID", "ACCOUNT", "USERNAME", "PASSWORD"))
+        account_id, account, decrypted_username, decrypted_password = cls.decrypt_username_and_password(row)
+        print("{:<5} {:<15} {:<15} {:<15}".format(account_id, account, decrypted_username, decrypted_password))
 
     @classmethod
     def display_all_user_credentials(cls):
         print(cls.user_id)
         rows = cls.c.execute("SELECT * FROM " + cls.user_id).fetchall()
         if rows:
-            print("{:<15} {:<15} {:<15}".format("ACCOUNT", "USERNAME", "PASSWORD"))
+            print("{:<5} {:<15} {:<15} {:<15}".format("ID", "ACCOUNT", "USERNAME", "PASSWORD"))
             for row in rows:
-                account, decrypted_username, decrypted_password = cls.decrypt_username_and_password(row)
-                print("{:<15} {:<15} {:<15}".format(account, decrypted_username, decrypted_password))
+                account_id, account, decrypted_username, decrypted_password = cls.decrypt_username_and_password(row)
+                print("{:<5} {:<15} {:<15} {:<15}".format(account_id, account, decrypted_username, decrypted_password))
 
             print("\n\n Press enter to proceed")
             input()
-
-            del (rows, row, decrypted_username, decrypted_password)
 
         else:
             print("\n\n\n\nTHE DATA YOU ARE LOOKING FOR DOES NOT EXIST\n\n\n")
@@ -230,13 +273,13 @@ class PasswordManager:
 
     @classmethod
     def decrypt_username_and_password(cls, row):
-        user_id_or_account_name, stored_username, stored_password, stored_key = row
+        user_id_or_account_id, account, stored_username, stored_password, stored_key = row
 
         f = Fernet(stored_key)
         decrypted_username = f.decrypt(stored_username).decode()
         decrypted_password = f.decrypt(stored_password).decode()
 
-        return user_id_or_account_name, decrypted_username, decrypted_password
+        return user_id_or_account_id, account, decrypted_username, decrypted_password
 
 
 if __name__ == '__main__':
