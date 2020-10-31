@@ -10,7 +10,7 @@ class Setup:
     @classmethod
     def __init__(cls):
         # Checks if the Database.db file exists or not.
-        if os.path.isfile('Database.db'):
+        if isfile('Database.db'):
             database_exist = True
         else:
             database_exist = False
