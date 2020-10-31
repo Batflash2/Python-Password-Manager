@@ -89,7 +89,7 @@ class Setup:
             if choice == 'y':
                 cls.create_new_user()
             elif choice == 'n':
-                break
+                return
             else:
                 print("Wrong choice!!")
 

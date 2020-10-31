@@ -178,6 +178,8 @@ class PasswordManager:
             if 0 < account_id < max_account_id:
                 while True:
                     system('cls')
+                    print("You are about to change the password for the following account")
+                    cls.display_one_user_credential(account_id)
                     print("Enter the new password:")
                     new_password = input()
                     print("Re-enter the password:")
@@ -268,11 +270,12 @@ class PasswordManager:
         user_ids = cls.c.execute("SELECT userid FROM USERS").fetchall()
         print("\n\nThere are " + str(len(user_ids)) + " users\n\n")
 
-        rows = cls.c.execute("SELECT * FROM USERS")
-        print("{:<10} {:<15}".format("USER ID", "NAME"))
-        for row in rows:
-            user_id, name, decrypted_username, decrypted_password = decrypt_username_and_password(row)
-            print("{:<10} {:<15}".format(user_id, name))
+        if user_ids > 0:
+            rows = cls.c.execute("SELECT * FROM USERS")
+            print("{:<10} {:<15}".format("USER ID", "NAME"))
+            for row in rows:
+                user_id, name, decrypted_username, decrypted_password = decrypt_username_and_password(row)
+                print("{:<10} {:<15}".format(user_id, name))
 
         print("\n\n")
         print("Click enter to continue")
