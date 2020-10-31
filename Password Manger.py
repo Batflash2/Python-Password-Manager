@@ -61,7 +61,7 @@ class PasswordManager:
             success = False
             rows = cls.c.execute("SELECT * FROM USERS").fetchall()
             for row in rows:
-                user_id, name, decrypted_username, decrypted_password = cls.decrypt_username_and_password(row)
+                user_id, name, decrypted_username, decrypted_password = decrypt_username_and_password(row)
                 if username == decrypted_username and password == decrypted_password:
                     success = True
                     cls.user_id = user_id
@@ -243,7 +243,7 @@ class PasswordManager:
         row = cls.c.execute("SELECT * FROM " + cls.user_id + " WHERE account_id = " + str(account_id)).fetchone()
         print("\n")
         print("{:<5} {:<15} {:<15} {:<15}".format("ID", "ACCOUNT", "USERNAME", "PASSWORD"))
-        account_id, account, decrypted_username, decrypted_password = cls.decrypt_username_and_password(row)
+        account_id, account, decrypted_username, decrypted_password = decrypt_username_and_password(row)
         print("{:<5} {:<15} {:<15} {:<15}".format(account_id, account, decrypted_username, decrypted_password))
 
     @classmethod
@@ -253,7 +253,7 @@ class PasswordManager:
         if rows:
             print("{:<5} {:<15} {:<15} {:<15}".format("ID", "ACCOUNT", "USERNAME", "PASSWORD"))
             for row in rows:
-                account_id, account, decrypted_username, decrypted_password = cls.decrypt_username_and_password(row)
+                account_id, account, decrypted_username, decrypted_password = decrypt_username_and_password(row)
                 print("{:<5} {:<15} {:<15} {:<15}".format(account_id, account, decrypted_username, decrypted_password))
 
             print("\n\n Press enter to proceed")
@@ -268,18 +268,25 @@ class PasswordManager:
         user_ids = cls.c.execute("SELECT userid FROM USERS").fetchall()
         print("\n\nThere are " + str(len(user_ids)) + " users\n\n")
 
+        rows = cls.c.execute("SELECT * FROM USERS")
+        print("{:<10} {:<15}".format("USER ID", "NAME"))
+        for row in rows:
+            user_id, name, decrypted_username, decrypted_password = decrypt_username_and_password(row)
+            print("{:<10} {:<15}".format(user_id, name))
+
+        print("\n\n")
         print("Click enter to continue")
         input()
 
-    @classmethod
-    def decrypt_username_and_password(cls, row):
-        user_id_or_account_id, account, stored_username, stored_password, stored_key = row
 
-        f = Fernet(stored_key)
-        decrypted_username = f.decrypt(stored_username).decode()
-        decrypted_password = f.decrypt(stored_password).decode()
+def decrypt_username_and_password(row):
+    user_id_or_account_id, account, stored_username, stored_password, stored_key = row
 
-        return user_id_or_account_id, account, decrypted_username, decrypted_password
+    f = Fernet(stored_key)
+    decrypted_username = f.decrypt(stored_username).decode()
+    decrypted_password = f.decrypt(stored_password).decode()
+
+    return user_id_or_account_id, account, decrypted_username, decrypted_password
 
 
 if __name__ == '__main__':

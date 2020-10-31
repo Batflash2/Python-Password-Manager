@@ -25,7 +25,7 @@ class Setup:
         # If the Database.db file doesn't exist it creates one
         cls.c = cls.con.cursor()
         if not database_exist:
-            cls.c.execute("CREATE TABLE USERS(userid, username, password, key)")
+            cls.c.execute("CREATE TABLE USERS(userid, name, username, password, key)")
             cls.con.commit()
 
     @classmethod
@@ -38,6 +38,8 @@ class Setup:
         key = Fernet.generate_key()
         f = Fernet(key)
 
+        print("Enter your name")
+        name = input()
         print("enter a username you won't forget")
         username = input()
         while True:
@@ -49,6 +51,7 @@ class Setup:
                 break
             else:
                 print("The passwords do not match please try again")
+                sleep(3)
 
         # Encrypts username and password using the cryptography library
         username = f.encrypt(username.encode())
@@ -60,12 +63,12 @@ class Setup:
             number -= 1
 
         # Inserts the user id, username, password and the key used to encrypt the username and password
-        c.execute("INSERT INTO USERS VALUES(?, ?, ?, ?)", ("USER" + str(number), username, password, key))
+        c.execute("INSERT INTO USERS VALUES(?, ?, ?, ?, ?)", ("USER" + str(number), name, username, password, key))
 
         print("Your username and password has been encrypted and stored in your database\n")
 
         # Creates a new table for the new user
-        c.execute("CREATE TABLE " + "USER" + str(number) + "(account, username, password, key)")
+        c.execute("CREATE TABLE " + "USER" + str(number) + "(account_id, account, username, password, key)")
 
         # Saves the changes made to the sql database
         cls.con.commit()
@@ -86,12 +89,12 @@ class Setup:
             if choice == 'y':
                 cls.create_new_user()
             elif choice == 'n':
-                quit()
+                break
             else:
                 print("Wrong choice!!")
 
     @classmethod
-    def connect(cls):
+    def credits(cls):
         # Prints the Readme file as credits and instructions
         with open('README.md') as file:
             file_data = file.read()
@@ -106,5 +109,6 @@ class Setup:
 def setup():
     obj = Setup()
 
-    obj.connect()
+    obj.credits()
     obj.create_new_user_ask()
+    return
