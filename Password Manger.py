@@ -65,7 +65,7 @@ class PasswordManager:
                 if username == decrypted_username and password == decrypted_password:
                     success = True
                     cls.user_id = user_id
-                    del (user_id, username, password, decrypted_username, decrypted_password)
+                    cls.decrypted_password = decrypted_password
                     break
 
             if not success:
@@ -213,14 +213,16 @@ class PasswordManager:
         account_id = input()
 
         while True:
+            system('cls')
             print("Are you sure you want to delete the credentials for this account?   y/n")
             cls.display_one_user_credential(account_id)
             choice = input()
             if choice == "y" or choice == "Y":
-                cls.c.execute("DELETE FROM " + cls.user_id + " WHERE account_id = " + str(account_id))
-                print("The credentials have been deleted")
-                cls.rearrange_accounts(int(account_id))
-                break
+                if cls.confirm_user() == "confirmed":
+                    cls.c.execute("DELETE FROM " + cls.user_id + " WHERE account_id = " + str(account_id))
+                    print("The credentials have been deleted")
+                    cls.rearrange_accounts(int(account_id))
+                    break
             elif choice == "n" or choice == "N":
                 break
             else:
@@ -241,6 +243,16 @@ class PasswordManager:
 
     @classmethod
     def confirm_user(cls):
+        while True:
+            print("Enter your user password")
+            if input() == cls.decrypted_password:
+                return "confirmed"
+            else:
+                print("Error the password does not match. Please try again")
+                sleep(2)
+
+    @classmethod
+    def copy_to_clipboard(cls):
         pass
 
     @classmethod
