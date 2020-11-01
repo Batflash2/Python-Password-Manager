@@ -178,25 +178,29 @@ class PasswordManager:
             if 0 < account_id <= max_account_id:
                 while True:
                     system('cls')
-                    print("You are about to change the password for the following account")
-                    cls.display_one_user_credential(account_id)
-                    print("Enter the new password:")
-                    new_password = input()
-                    print("Re-enter the password:")
-                    if new_password == input():
-                        stored_key = cls.c.execute("SELECT key FROM " + cls.user_id + " WHERE account_id = ?",
-                                                   (account_id,)).fetchone()
-                        stored_key = str(stored_key)[3:-3].encode()
-                        f = Fernet(stored_key)
-                        encrypted_new_password = f.encrypt(new_password.encode())
-                        cls.c.execute("UPDATE " + cls.user_id + " SET password = ? WHERE account_id = ?",
-                                      (encrypted_new_password, account_id,))
-                        cls.con.commit()
+                    if cls.confirm_user() == "confirmed":
+                        print("You are about to change the password for the following account")
+                        cls.display_one_user_credential(account_id)
+                        print("Enter the new password:")
+                        new_password = input()
+                        print("Re-enter the password:")
+                        if new_password == input():
+                            stored_key = cls.c.execute("SELECT key FROM " + cls.user_id + " WHERE account_id = ?",
+                                                       (account_id,)).fetchone()
+                            stored_key = str(stored_key)[3:-3].encode()
+                            f = Fernet(stored_key)
+                            encrypted_new_password = f.encrypt(new_password.encode())
+                            cls.c.execute("UPDATE " + cls.user_id + " SET password = ? WHERE account_id = ?",
+                                          (encrypted_new_password, account_id,))
+                            cls.con.commit()
+                            done = True
+                            break
+                        else:
+                            print("The passwords do not match please try again")
+                            sleep(3)
+                    else:
                         done = True
                         break
-                    else:
-                        print("The passwords do not match please try again")
-                        sleep(3)
             else:
                 print("Error: Wrong input")
                 sleep(2)
@@ -223,6 +227,8 @@ class PasswordManager:
                     print("The credentials have been deleted")
                     cls.rearrange_accounts(int(account_id))
                     break
+                else:
+                    break
             elif choice == "n" or choice == "N":
                 break
             else:
@@ -244,9 +250,12 @@ class PasswordManager:
     @classmethod
     def confirm_user(cls):
         while True:
-            print("Enter your user password")
-            if input() == cls.decrypted_password:
+            print("Enter your user password or just press enter to exit")
+            password = input()
+            if password == cls.decrypted_password:
                 return "confirmed"
+            elif password == "":
+                return "exit"
             else:
                 print("Error the password does not match. Please try again")
                 sleep(2)
