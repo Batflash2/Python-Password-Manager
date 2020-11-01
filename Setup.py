@@ -110,5 +110,5 @@ def setup():
     obj = Setup()
 
     obj.credits()
-    obj.create_new_user_ask()
+    obj.create_new_user()
     return

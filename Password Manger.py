@@ -175,7 +175,7 @@ class PasswordManager:
             done = False
 
             # To check if the id entered by the user is within the range or not
-            if 0 < account_id < max_account_id:
+            if 0 < account_id <= max_account_id:
                 while True:
                     system('cls')
                     print("You are about to change the password for the following account")
@@ -219,6 +219,7 @@ class PasswordManager:
             if choice == "y" or choice == "Y":
                 cls.c.execute("DELETE FROM " + cls.user_id + " WHERE account_id = " + str(account_id))
                 print("The credentials have been deleted")
+                cls.rearrange_accounts(int(account_id))
                 break
             elif choice == "n" or choice == "N":
                 break
@@ -233,8 +234,10 @@ class PasswordManager:
 
     # To rearrange the accounts after an account has been removed since there is a number gap
     @classmethod
-    def rearrange_accounts(cls):
-        pass
+    def rearrange_accounts(cls, deleted_account_id):
+        for i in range(deleted_account_id, len(cls.c.execute("SELECT account_id FROM " + cls.user_id).fetchall()) + 2):
+            cls.c.execute("UPDATE " + cls.user_id + " SET account_id = ? WHERE account_id = ?", (i - 1, i))
+        cls.con.commit()
 
     @classmethod
     def confirm_user(cls):
