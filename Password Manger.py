@@ -359,13 +359,11 @@ class PasswordManager:
 
     @classmethod
     def credits(cls):
-        # Prints the Readme file as credits and instructions
-        with open('README.md') as file:
-            file_data = file.read()
-            print(file_data)
-            file.close()
+        system('cls')
+        print("Welcome to the Password Manager created by Pratham Bhat.\n"
+              "Please read the README.md for more information")
 
-        print("\n\n\n\n\nEnter to go to the next page")
+        print("\n\n\nEnter to go to the next page")
         input()
 
     @classmethod
