@@ -69,7 +69,10 @@ class PasswordManager:
                     break
 
             if not success:
-                print("Error username and password do not match")
+                system('cls')
+                print("Error: Username and password do not match\n"
+                      "       Please try again")
+                sleep(2)
             else:
                 print("Successfully logged in as " + cls.user_id)
                 sleep(2)
@@ -213,6 +216,7 @@ class PasswordManager:
     # To remove an account credential when it is no longer required
     @classmethod
     def remove_account_credentials(cls):
+        system('cls')
         while True:
             cls.display_all_user_credentials()
 
@@ -254,18 +258,19 @@ class PasswordManager:
         choice = input()
         confirmation = "Delete " + cls.user_id
         if choice == 'y' or choice == 'Y':
-            cls.confirm_user()
-            while True:
-                print("To confirm this change please enter the following:\n"
-                      + confirmation)
-                if input() == confirmation:
-                    cls.c.execute("DROP TABLE " + cls.user_id)
-                    cls.c.execute("DELETE FROM USERS WHERE userid = " + cls.user_id)
-                    break
-                else:
-                    print("Error: Wrong confirmation data\n"
-                          "       Please try again")
-                    sleep(2)
+            if cls.confirm_user() == "confirmed":
+                while True:
+                    print("To confirm this change please enter the following:\n"
+                          + confirmation)
+                    if input() == confirmation:
+                        cls.c.execute("DELETE FROM USERS WHERE userid = ?", (cls.user_id,))
+                        cls.c.execute("DROP TABLE " + cls.user_id)
+                        break
+                    else:
+                        print("Error: Wrong confirmation data\n"
+                              "       Please try again")
+                        sleep(2)
+
         cls.con.commit()
 
     # To rearrange the accounts after an account has been removed since there is a number gap
@@ -302,6 +307,7 @@ class PasswordManager:
 
     @classmethod
     def display_all_user_credentials(cls):
+        system('cls')
         print(cls.user_id)
         rows = cls.c.execute("SELECT * FROM " + cls.user_id).fetchall()
         if rows:
@@ -314,6 +320,7 @@ class PasswordManager:
             input()
 
         else:
+            system('cls')
             print("\n\n\n\nTHE DATA YOU ARE LOOKING FOR DOES NOT EXIST\n\n\n")
             sleep(3)
 

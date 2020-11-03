@@ -103,7 +103,6 @@ class Setup:
 
         print("\n\n\n\n\nEnter to go to the next page")
         input()
-        system('cls')  # Clears the screen
 
 
 def setup():
