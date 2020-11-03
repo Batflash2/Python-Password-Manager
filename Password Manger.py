@@ -104,6 +104,7 @@ class PasswordManager:
                 cls.change_account_password()
             elif choice == '6':
                 cls.remove_user()
+                break
             elif choice == '7':
                 break
             elif choice == 'q':
@@ -212,9 +213,20 @@ class PasswordManager:
     # To remove an account credential when it is no longer required
     @classmethod
     def remove_account_credentials(cls):
-        cls.display_all_user_credentials()
-        print("Enter the account_id")
-        account_id = input()
+        while True:
+            cls.display_all_user_credentials()
+
+            max_account_id = len(cls.c.execute("SELECT account_id FROM " + cls.user_id).fetchall()) + 1
+            if cls.c.execute("SELECT account_id FROM " + cls.user_id).fetchone() == "1":
+                max_account_id -= 1
+
+            print("Enter the account_id")
+            account_id = input()
+            if not 0 < int(account_id) <= max_account_id:
+                print("Error: The account id is out of range. Please enter a valid id")
+                sleep(2)
+            else:
+                break
 
         while True:
             system('cls')
@@ -238,7 +250,23 @@ class PasswordManager:
 
     @classmethod
     def remove_user(cls):
-        pass
+        print("Are you sure that you want to delete this user and all of its data?    y/n")
+        choice = input()
+        confirmation = "Delete " + cls.user_id
+        if choice == 'y' or choice == 'Y':
+            cls.confirm_user()
+            while True:
+                print("To confirm this change please enter the following:\n"
+                      + confirmation)
+                if input() == confirmation:
+                    cls.c.execute("DROP TABLE " + cls.user_id)
+                    cls.c.execute("DELETE FROM USERS WHERE userid = " + cls.user_id)
+                    break
+                else:
+                    print("Error: Wrong confirmation data\n"
+                          "       Please try again")
+                    sleep(2)
+        cls.con.commit()
 
     # To rearrange the accounts after an account has been removed since there is a number gap
     @classmethod
