@@ -4,7 +4,6 @@ from time import sleep
 import sqlite3 as sql
 from sqlite3 import Error
 from cryptography.fernet import Fernet
-from Setup import setup
 
 
 class PasswordManager:
@@ -15,7 +14,7 @@ class PasswordManager:
                   "Creating new Database file")
             sleep(3)
 
-            setup()
+            cls.setup()
 
         try:
             cls.con = sql.connect('Database.db')
@@ -39,7 +38,7 @@ class PasswordManager:
             if choice == '1':
                 cls.login()
             elif choice == '2':
-                setup()
+                cls.create_new_user()
             elif choice == '3':
                 cls.check_number_of_users()
             elif choice == 'q':
@@ -339,6 +338,101 @@ class PasswordManager:
         print("\n\n")
         print("Click enter to continue")
         input()
+
+    # Setup function called only when the database file does not exist
+    @classmethod
+    def setup(cls):
+        try:
+            cls.con = sql.connect('Database.db')
+        except Error:
+            print(Error)
+            sleep(3)
+            quit()
+
+        # Creates a table that stores the details of users
+        cls.c = cls.con.cursor()
+        cls.c.execute("CREATE TABLE USERS(userid, name, username, password, key)")
+        cls.con.commit()
+
+        cls.credits()
+        cls.create_new_user()
+
+    @classmethod
+    def credits(cls):
+        # Prints the Readme file as credits and instructions
+        with open('README.md') as file:
+            file_data = file.read()
+            print(file_data)
+            file.close()
+
+        print("\n\n\n\n\nEnter to go to the next page")
+        input()
+
+    @classmethod
+    def create_new_user(cls):
+        c = cls.con.cursor()
+
+        # Clear the screen
+        system('cls')
+
+        key = Fernet.generate_key()
+        f = Fernet(key)
+
+        print("Creating new user\n\n")
+        print("Enter your name")
+        name = input()
+        print("enter a username you won't forget")
+        username = input()
+        while True:
+            system('cls')
+            print("enter a password you won't forget")
+            password = input()
+            print("Re-enter the password")
+            if password == input():
+                break
+            else:
+                print("The passwords do not match please try again")
+                sleep(3)
+
+        # Encrypts username and password using the cryptography library
+        username = f.encrypt(username.encode())
+        password = f.encrypt(password.encode())
+
+        # Checks the number of users to give it a name like USER2, USER3 etc
+        number = len(c.execute("SELECT userid FROM USERS").fetchall()) + 1
+        if c.execute("SELECT userid FROM USERS").fetchone() == "USER1":
+            number -= 1
+
+        # Inserts the user id, username, password and the key used to encrypt the username and password
+        c.execute("INSERT INTO USERS VALUES(?, ?, ?, ?, ?)", ("USER" + str(number), name, username, password, key))
+
+        print("Your username and password has been encrypted and stored in your database\n")
+
+        # Creates a new table for the new user
+        c.execute("CREATE TABLE " + "USER" + str(number) + "(account_id, account, username, password, key)")
+
+        # Saves the changes made to the sql database
+        cls.con.commit()
+
+        print("Your user id is USER" + str(number) +
+              "\nIt is not necessary to remember this")
+        sleep(3)
+
+        cls.create_new_user_ask()
+
+    @classmethod
+    def create_new_user_ask(cls):
+        while True:
+            system('cls')
+            print("\nDo you want to create a new user?   y/n\n")
+            choice = input()
+
+            if choice == 'y':
+                cls.create_new_user()
+            elif choice == 'n':
+                break
+            else:
+                print("Wrong choice!!")
 
 
 def decrypt_username_and_password(row):
